@@ -1,27 +1,7 @@
-function solvePartOne() {
-    let input = getInput();
-    let sum = input.reduce((accumulator, current) => accumulator + (Math.floor(current/3)-2), 0);
-    console.log(sum);
-}
+const FuelCalculator = require("../solvers/day-1");
 
-function solvePartTwo() {
-    let input = getInput();
-    let sum = input.reduce((accumulator, current) => {
-        let fuelForModule = (Math.floor(current/3)-2);
-        let fuelForFuel = fuelForModule;
-        while(fuelForFuel >= 3) {
-            fuelForFuel = (Math.floor(fuelForFuel/3)-2);
-            if(fuelForFuel > 0) {
-                fuelForModule += fuelForFuel;
-            }
-        }
-        return accumulator + fuelForModule;
-    }, 0);
-    console.log(sum);
-}
-
-solvePartOne();
-solvePartTwo();
+console.log(FuelCalculator.solvePartOne(getInput()));
+console.log(FuelCalculator.solvePartTwo(getInput()));
 
 
 function getInput() {
