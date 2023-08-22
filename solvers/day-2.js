@@ -51,8 +51,8 @@ const AlarmProgram = {
                 freshMemory[2] = verb;
                 currentSolution = AlarmProgram.solve(freshMemory);
                 if(currentSolution[0] === target) {
-                    console.log("Found target");
-                    console.log(`Noun: ${noun} --- Verb: ${verb} --- Got value: ${currentSolution[0]}`);
+                    // console.log("Found target");
+                    // console.log(`Noun: ${noun} --- Verb: ${verb} --- Got value: ${currentSolution[0]}`);
                     solutionNoun = noun;
                     solutionVerb = verb;
                     found = true;
