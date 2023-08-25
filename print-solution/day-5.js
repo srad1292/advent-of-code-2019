@@ -4,16 +4,18 @@ const SunnyAsteroids = require('../solvers/day-5');
 function solvePartOne() {
     const startingState = getStartingState();
     const input = 1;
-    // console.log(SunnyAsteroids.intCode(startingState, input).output);
     console.log(SunnyAsteroids.solvePartOne(startingState, input));
-    
 }
 
 solvePartOne();
 
-function solvePartTwo() {}
+function solvePartTwo() {
+    const startingState = getStartingState();
+    const input = 5;
+    console.log(SunnyAsteroids.solvePartTwo(startingState, input));
+}
 
-solvePartTwo;
+solvePartTwo();
 
 function getStartingState() {
     const startingState = [
