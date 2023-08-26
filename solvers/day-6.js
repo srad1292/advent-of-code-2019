@@ -1,58 +1,70 @@
-// Build a tree
-// To count orbits, need to traverse tree 
-// count += distance
-// foreach chid node -> count += nextNode(count, distance+1)
-// return count
-
-
-class Node {
-    constructor(id) {
-        this.id = id;
-        this.children = [];
-    }
-    addChild(node) {
-        this.children.push(node);
-    }
-    getChildren() {
-        return this.children;
-    }
-}
-
 const UniversalOrbitMap = {
-    // directOrbits: 0,
-    // indirectOrbits: 0,
     solvePartOne: (input) => {
-        let tree = UniversalOrbitMap.buildTree(input);
-        let orbits = UniversalOrbitMap.countOrbits(tree);
+        let orbitMap = UniversalOrbitMap.buildOrbitMap(input);
+        let orbits = UniversalOrbitMap.countOrbits(orbitMap);
         return orbits;
     },
-    buildTree: (input) => {
-        let nodeMap = {};
+    solvePartTwo: (input, traveler, destination) => {
+        let orbitMap = UniversalOrbitMap.buildOrbitMap(input);
+        let travelDistance = UniversalOrbitMap.findTravelDistance(orbitMap, traveler, destination);
+        return travelDistance;
+    },
+    buildOrbitMap: (input) => {
+        let orbitMap = {};
         let orbits = input.split("\n");
         let orbiting, orbited;
         orbits.forEach(orbit => {
             objects = orbit.split(")");
             orbiting = objects[1].trim();
             orbited = objects[0].trim();
-            if(nodeMap[orbiting] === undefined) {
-                nodeMap[orbiting] = new Node(orbiting);
+            if(orbitMap[orbiting] === undefined) {
+                orbitMap[orbiting] = {parent: undefined, children: []};
             }
-            if(nodeMap[orbited] === undefined) {
-                nodeMap[orbited] = new Node(orbited);
+            if(orbitMap[orbited] === undefined) {
+                orbitMap[orbited] = {parent: undefined, children: []};
             }
-            nodeMap[orbited].addChild(nodeMap[orbiting]);
+            orbitMap[orbited].children.push(orbiting);
+            orbitMap[orbiting].parent = orbited;
         });
-        return nodeMap['COM'];
+        return orbitMap;
     },
-    countOrbits: (tree) => {
-        let countNextNode = (node, count, distance) => {
+    countOrbits: (orbitMap) => {
+        let countNextNode = (map, id, count, distance) => {
             count += distance;
-            node.getChildren().forEach(child => {
-                count = countNextNode(child, count, distance+1);
+            map[id].children.forEach(childId => {
+                count = countNextNode(map, childId, count, distance+1);
             });
             return count;
         };
-        return countNextNode(tree, 0, 0);
+        return countNextNode(orbitMap, "COM", 0, 0);
+    },
+    findTravelDistance: (orbitMap, traveler, destination) => {
+        let result = -1;
+        let tryToFindNode = (distance,currentId,fromId) => {
+            if(orbitMap[destination].parent === currentId) {
+                return distance;
+            } 
+            if(orbitMap[destination] === currentId) {
+                return distance+1;
+            }
+
+            orbitMap[currentId].children.forEach(childId => {
+                if(childId !== fromId) {
+                    result = tryToFindNode(distance+1, childId, currentId);
+                    if(result !== -1) {
+                        return result;
+                    }
+                }
+            });
+
+            if(result === -1 && orbitMap[currentId].parent !== undefined && orbitMap[currentId].parent !== fromId) {
+                result = tryToFindNode(currentId === traveler ? distance : distance+1, orbitMap[currentId].parent, currentId);
+            }
+
+            return result;
+        }
+
+        return tryToFindNode(0,traveler,'');
     }
 
 };

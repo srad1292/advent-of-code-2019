@@ -5,16 +5,28 @@ function solvePartOne() {
     console.log(UniversalOrbitMap.solvePartOne(input));
 }
 
-function printTree(node) {
-    console.log(node.id);
-    for(let idx = 0; idx < node.children.length; idx++) {
-        printTree(node.children[idx]);
-    }
-
-}
-
 solvePartOne();
 
+function solvePartTwo() {
+    let input = getInput();
+    console.log(UniversalOrbitMap.solvePartTwo(input, 'YOU', 'SAN'));
+}
+
+solvePartTwo();
+
+function getSampleInput() {
+    return `COM)B
+    B)C
+    C)D
+    D)E
+    E)F
+    B)G
+    G)H
+    D)I
+    E)J
+    J)K
+    K)L`;
+}
 
 function getInput() {
     return `6CF)4J7
@@ -1289,4 +1301,20 @@ function getInput() {
     Y3R)DJF
     4HL)641
     FYC)PGC`;
+}
+
+function getPt2SampleInput() {
+    return `COM)B
+    B)C
+    C)D
+    D)E
+    E)F
+    B)G
+    G)H
+    D)I
+    E)J
+    J)K
+    K)L
+    K)YOU
+    I)SAN`;
 }
