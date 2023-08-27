@@ -20,20 +20,63 @@ const AmplificationCircuit = {
         permutations.forEach(permutation => {
             nextInput = input;
             permutation.forEach(phase => {
-                output = AmplificationCircuit.intCode(state,[phase,nextInput]).output;
+                output = AmplificationCircuit.intCode(state,[phase,nextInput], 0, 0, false).output;
                 nextInput = output[output.length-1];
             });
             maxSignal = Math.max(maxSignal, nextInput);
         });
         return maxSignal;
     },
-    solvePartTwo: (state, input) => {
-        const result = AmplificationCircuit.intCode(state,input);
-        return result.output[result.output.length-1];
+    solvePartTwo: (state, input, phaseSettings, outputAmpIndex) => {
+        const permutations = AmplificationCircuit.buildPermutations(phaseSettings);
+        let maxSignal = -1;
+        let nextInput = input;
+        let output;
+        let amplifiers = [];
+        let halted = false;
+        let amplifierIndex = 0;
+        let amplifier;
+        permutations.forEach(permutation => {
+            nextInput = input;
+            amplifiers = [];
+            halted = false;
+            amplifierIndex = 0;
+            permutation.forEach(phase => {
+                amplifiers.push({
+                    state: [...state],
+                    instructionPointer: 0,
+                    output: -1,
+                    input: nextInput,
+                    phase: phase,
+                    inputIndex: 0
+                });
+            });
+            while(!halted) {
+                amplifier = amplifiers[amplifierIndex];
+                output = AmplificationCircuit.intCode(amplifier.state, [amplifier.phase, amplifier.input], amplifier.instructionPointer, amplifier.inputIndex, true);
+                amplifier.state = [...output.state];
+                amplifier.instructionPointer = output.instructionPointer;
+                if(output.output.length > 0) {
+                    amplifier.output = output.output[output.output.length-1];
+                }
+                amplifier.inputIndex = output.inputIndex;
+
+                if(amplifierIndex === outputAmpIndex) {
+                    maxSignal = Math.max(maxSignal, amplifier.output);
+                }
+
+                halted = output.halted;
+
+                amplifierIndex = amplifierIndex === amplifiers.length-1 ? 0 : amplifierIndex+1;
+                amplifiers[amplifierIndex].input = amplifier.output;
+            }
+            
+        });
+        return maxSignal;
     },
-    intCode: (state, input) => {
+    intCode: (state, input, instructionPointer, inputIndex, pauseOnOutput) => {
         startingState = [...state];
-        let currentIndex = 0;
+        let currentIndex = instructionPointer;
         let statusOK = true;
         let op = 0;
         let opAndParams = [];
@@ -42,12 +85,13 @@ const AmplificationCircuit = {
         let storeValue = 0;
         let destination = 0;
         let output = [];
-        let inputIndex = 0;
+        let halted = false;
         try {
             while(statusOK && currentIndex < state.length) {
                 opAndParams = AmplificationCircuit.opcodeToList(state[currentIndex]);
                 op = opAndParams[0];
                 if(op === AmplificationCircuit.endOP) {
+                    halted = true;
                     break;
                 } else if(op === AmplificationCircuit.addOP || op === AmplificationCircuit.multOP || op === AmplificationCircuit.equalsOP || op === AmplificationCircuit.lessThanOP) {
                     valueA = opAndParams[1] == AmplificationCircuit.posMode ? state[state[currentIndex+1]] : state[currentIndex+1];
@@ -75,6 +119,7 @@ const AmplificationCircuit = {
                     valueA = opAndParams[1] == AmplificationCircuit.posMode ? state[state[currentIndex+1]] : state[currentIndex+1];
                     output.push(valueA);
                     currentIndex+=2;
+                    if(pauseOnOutput) { break };
                 } else if(op === AmplificationCircuit.jumpIfTrueOP || op === AmplificationCircuit.jumpIfFalseOP) { 
                     valueA = opAndParams[1] == AmplificationCircuit.posMode ? state[state[currentIndex+1]] : state[currentIndex+1];
                     destination = opAndParams[2] == AmplificationCircuit.posMode ? state[state[currentIndex+2]] : state[currentIndex+2];
@@ -84,10 +129,10 @@ const AmplificationCircuit = {
                     break;
                 }
             }
-            return {state, output};
+            return {state, output, halted, instructionPointer: currentIndex, inputIndex};
         } catch(e) {
             console.log("Error while creating alarm program state");
-            return {state, output};
+            return {state, output, halted, instructionPointer: currentIndex};
         }
     },
     opcodeToList: (opcode) => {
@@ -122,8 +167,6 @@ const AmplificationCircuit = {
                 freshMemory[2] = verb;
                 currentSolution = AmplificationCircuit.solve(freshMemory);
                 if(currentSolution[0] === target) {
-                    // console.log("Found target");
-                    // console.log(`Noun: ${noun} --- Verb: ${verb} --- Got value: ${currentSolution[0]}`);
                     solutionNoun = noun;
                     solutionVerb = verb;
                     found = true;
