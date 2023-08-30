@@ -50,7 +50,10 @@ const SensorBoost = {
                     valueB = getRWResult.value;
 
 
-                    destination = state[currentIndex+3];
+                    getRWResult = SensorBoost.getWriteParamValue(state, currentIndex, relativeBase, 3, opAndParams);
+                    state = getRWResult.state;
+                    destination = getRWResult.value;
+
 
                     if(op === SensorBoost.addOP) {
                         storeValue = valueA+valueB;
@@ -63,15 +66,12 @@ const SensorBoost = {
                     }
                     state[destination] = storeValue;
                     currentIndex+=4;
-                    // console.log({op: "Add/Mul/Eq/Less", destination, storeValue, currentIndex, relativeBase});
 
                 } else if(op === SensorBoost.saveOP) {
-                    // destination = state[currentIndex+1];
                     
                     getRWResult = SensorBoost.getWriteParamValue(state, currentIndex, relativeBase, 1, opAndParams);
                     state = getRWResult.state;
                     destination = getRWResult.value;
-                    // console.log("Saving " + input[inputIndex] + " to destination: " + destination);
                     
                     state[destination] = input[inputIndex];
                     if(inputIndex<input.length-1) {
