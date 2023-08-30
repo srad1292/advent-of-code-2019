@@ -171,4 +171,71 @@ describe("Solve Part One", () => {
         let actual = output.output[0];
         expect(actual).toEqual(expected);
     });
+
+    test("Sample Four", () => {
+        let startingState = [109, -1, 4, 1, 99];
+        let output = SensorBoost.solvePartOne(startingState, 0);
+        let expected = -1;
+        let actual = output.output[0];
+        expect(actual).toEqual(expected);
+    });
+
+    test("Sample Five", () => {
+        let startingState = [109, -1, 104, 1, 99];
+        let output = SensorBoost.solvePartOne(startingState, 0);
+        let expected = 1;
+        let actual = output.output[0];
+        expect(actual).toEqual(expected);
+    });
+
+    test("Sample Six", () => {
+        let startingState = [109, -1, 204, 1, 99];
+        let output = SensorBoost.solvePartOne(startingState, 0);
+        let expected = 109;
+        let actual = output.output[0];
+        expect(actual).toEqual(expected);
+    });
+
+    test("Sample Seven", () => {
+        let startingState = [109, 1, 9, 2, 204, -6, 99];
+        let output = SensorBoost.solvePartOne(startingState, 0);
+        let expected = 204;
+        let actual = output.output[0];
+        expect(actual).toEqual(expected);
+    });
+
+    test("Sample Eight", () => {
+        let startingState = [109, 1, 109, 9, 204, -6, 99];
+        let output = SensorBoost.solvePartOne(startingState, 0);
+        let expected = 204;
+        let actual = output.output[0];
+        expect(actual).toEqual(expected);
+    });
+
+    test("Sample Nine", () => {
+        let startingState = [109, 1, 209, -1, 204, -106, 99];
+        let output = SensorBoost.solvePartOne(startingState, 0);
+        let expected = 204;
+        let actual = output.output[0];
+        expect(actual).toEqual(expected);
+    });
+
+    test("Sample Ten", () => {
+        let startingState = [109, 1, 3, 3, 204, 2, 99];
+        let input = 11;
+        let expected = input;
+        let output = SensorBoost.solvePartOne(startingState, input);
+        let actual = output.output[0];
+        expect(actual).toEqual(expected);
+    });
+
+    test("Sample Eleven", () => {
+        let startingState = [109, 1, 203, 2, 204, 2, 99];
+        let input = 11;
+        let expected = input;
+        let output = SensorBoost.solvePartOne(startingState, input);
+        let actual = output.output[0];
+        expect(actual).toEqual(expected);
+    });
+
 });
