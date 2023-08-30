@@ -9,8 +9,6 @@ function solvePartOne() {
     // let startingState = [109, -1, 104, 1, 99];
     // let startingState = [109, -1, 204, 1, 99];
     // let startingState = [109, 1, 9, 2, 204, -6, 99];
-    
-    
     // let startingState = [109, 1, 109, 9, 204, -6, 99]; // 204
     // let startingState = [109, 1, 209, -1, 204, -106, 99]; // 204
     // let startingState = [109, 1, 3, 3, 204, 2, 99]; // input
@@ -22,6 +20,14 @@ function solvePartOne() {
 }
 
 solvePartOne();
+
+function solvePartTwo() {
+    let startingState = [...getStartingState()];
+    let output = SensorBoost.solvePartTwo(startingState, 2);
+    console.log(output.output);
+}
+
+solvePartTwo();
 
 function getStartingState() {
     return [1102,34463338,34463338,63,1007,63,34463338,63,1005,63,53,1102,1,3,1000,109,988,209,12,9,1000,209,6,

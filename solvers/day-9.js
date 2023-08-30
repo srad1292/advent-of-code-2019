@@ -18,6 +18,9 @@ const SensorBoost = {
     solvePartOne: (state, input) => {
         return SensorBoost.intCode(state,[input, input], 0, 0, false);
     },
+    solvePartTwo: (state, input) => {
+        return SensorBoost.intCode(state,[input, input], 0, 0, false);
+    },
     intCode: (state, input, instructionPointer, inputIndex, pauseOnOutput) => {
         startingState = [...state];
         let currentIndex = instructionPointer;
