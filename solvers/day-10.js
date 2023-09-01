@@ -6,30 +6,52 @@ const MonitoringStation = {
     Asteroid: '#',
     Empty: '.',
     Blocked: 'x',
+    Deleted: 'D',
     debugRow: 4,
     debugCol: 3,
     shouldDebug: false,
+    shouldPrintInSolves: false,
 
-
-    // for each asteroid A, go through every other spot
-    // if spot is asteroid B, find lcd distance between x/y
-    // go through each location from A using lcd steps and mark any after the first one as blocked 
-    // go through each location and count visible asteroids to store in solution
     solvePartOne: (input) => {
         let chart = MonitoringStation.convertInputToChart(input);
-        if(MonitoringStation.shouldDebug) {
+        if(MonitoringStation.shouldPrintInSolves) {
             console.log("CHART");
             console.log(chart);
         }
         
         let visibleCounts = MonitoringStation.countVisibleAsteroids(chart); 
-        if(MonitoringStation.shouldDebug) {
+        if(MonitoringStation.shouldPrintInSolves) {
             console.log("\nVISIBLE COUNTS");
             console.log(visibleCounts);
         }
         
         let mostVisibleAsteroids = MonitoringStation.mostVisibleAsteroids(visibleCounts);
         return mostVisibleAsteroids;
+    },
+    solvePartTwo: (input, deletionTarget) => {
+        let chart = MonitoringStation.convertInputToChart(input);
+        if(MonitoringStation.shouldPrintInSolves) {
+            console.log("CHART");
+            console.log(chart);
+        }
+        
+        let visibleCounts = MonitoringStation.countVisibleAsteroids(chart); 
+
+        let stationCoordinates = MonitoringStation.getStationCoordinates(visibleCounts);
+        if(MonitoringStation.shouldPrintInSolves) {
+            console.log("\nStation Coordinates");
+            console.log("Row=" + stationCoordinates[0] + "  Col=" + stationCoordinates[1]);
+        }
+        let orderOfDeletion = MonitoringStation.orderOfDeletion(chart, stationCoordinates);
+        if(MonitoringStation.shouldPrintInSolves) {
+            console.log("\nDeletion Order");
+            console.log(orderOfDeletion);
+        }
+        let deleted = orderOfDeletion[deletionTarget-1];
+        if(MonitoringStation.shouldPrintInSolves) {
+            console.log("X=" + deleted.col + " --- Y=" + deleted.row);
+        }
+        return deleted.col*100+deleted.row;
     },
     convertInputToChart: (input) => {
         let chart = [];
@@ -54,10 +76,6 @@ const MonitoringStation = {
     countVisibleAsteroids: (chart) => {
         let copy = [];
         let visibleCounts = MonitoringStation.copyChart(chart);
-        let gcd = 0;
-        let rowChange, colChange;
-        let startRow, startCol;
-        let firstFind = true;
         for(let rowA = 0; rowA < chart.length; rowA++) {
             for(let colA = 0; colA < chart[0].length; colA++) {
                 if(chart[rowA][colA] === MonitoringStation.Empty) {
@@ -65,53 +83,7 @@ const MonitoringStation = {
                     continue;
                 }
                 visibleCounts[rowA][colA] = 0;
-                copy = MonitoringStation.copyChart(chart);
-                for(let rowB = 0; rowB < chart.length; rowB++) {
-                    for(let colB = 0; colB < chart[0].length; colB++) {
-                        if(colB === colA && rowB === rowA) {
-                            continue;
-                        }
-                        firstFind = true;
-                        // Could add an || === Blocked as an assumption that if
-                        // something is marked as blocked, every other one in that pattern already is
-                        // I will get it working without that and then add it in to test
-                        if(chart[rowB][colB] === MonitoringStation.Empty) {
-                            continue;
-                        }
-                        gcd = MonitoringStation.gcd(rowB-rowA, colB-colA);
-                        rowChange = Math.floor(Math.abs(rowB-rowA)/gcd);
-                        colChange = Math.floor(Math.abs(colB-colA)/gcd);
-                        startRow = rowB < rowA ? rowA-rowChange : rowA+rowChange;
-                        startCol = colB < colA ? colA-colChange : colA+colChange;
-                        if(MonitoringStation.shouldDebug && rowA === MonitoringStation.debugRow && colA === MonitoringStation.debugCol) {
-                            if(rowB === 0 && colB === 0) {
-                                console.log({val: chart[rowB][colB], shouldBeSkipped: chart[rowB][colB] === MonitoringStation.Empty});
-                            }
-                            console.log({rowA, colA, rowB, colB, rowChange, colChange});
-                            console.log({gcd});
-                        }
-                        while(startRow < chart.length && startRow >= 0 && startCol < chart[0].length && startCol >= 0) {
-                            if(MonitoringStation.shouldDebug && rowA === MonitoringStation.debugRow && colA === MonitoringStation.debugCol) {
-                                console.log({startRow, startCol});
-                            }
-                            if(chart[startRow][startCol] === MonitoringStation.Asteroid) {
-                                copy[startRow][startCol] = firstFind ? copy[startRow][startCol] : MonitoringStation.Blocked;
-                                firstFind = false; 
-                            }
-                            if(MonitoringStation.shouldDebug && rowA === MonitoringStation.debugRow && colA === MonitoringStation.debugCol) {
-                                console.log(copy);
-                            }
-                            startRow = rowB < rowA ? startRow-rowChange : startRow+rowChange;
-                            startCol = colB < colA ? startCol-colChange : startCol+colChange;
-                        }
-
-                        if(MonitoringStation.shouldDebug && rowA === MonitoringStation.debugRow && colA === MonitoringStation.debugCol) {
-                            console.log("Past While");
-                            console.log({rowB, colB, gcd, startRow, startCol});
-                            console.log("---------");
-                        }
-                    }
-                }
+                copy = MonitoringStation.getVisibleChart(chart, rowA, colA);
 
 
                 for(let rowCount = 0; rowCount < chart.length; rowCount++) {
@@ -132,6 +104,57 @@ const MonitoringStation = {
         return visibleCounts;
 
     },
+    getVisibleChart: (chart, compRow, compCol) => {
+        let gcd = 0;
+        let rowChange, colChange;
+        let startRow, startCol;
+        let firstFind = true;
+        let copy = MonitoringStation.copyChart(chart);
+        for(let rowB = 0; rowB < chart.length; rowB++) {
+            for(let colB = 0; colB < chart[0].length; colB++) {
+                if(colB === compCol && rowB === compRow) {
+                    continue;
+                }
+                firstFind = true;
+                if(chart[rowB][colB] === MonitoringStation.Empty || chart[rowB][colB] === MonitoringStation.Blocked) {
+                    continue;
+                }
+                gcd = MonitoringStation.gcd(rowB-compRow, colB-compCol);
+                rowChange = Math.floor(Math.abs(rowB-compRow)/gcd);
+                colChange = Math.floor(Math.abs(colB-compCol)/gcd);
+                startRow = rowB < compRow ? compRow-rowChange : compRow+rowChange;
+                startCol = colB < compCol ? compCol-colChange : compCol+colChange;
+                if(MonitoringStation.shouldDebug && compRow === MonitoringStation.debugRow && compCol === MonitoringStation.debugCol) {
+                    if(rowB === 0 && colB === 0) {
+                        console.log({val: chart[rowB][colB], shouldBeSkipped: chart[rowB][colB] === MonitoringStation.Empty});
+                    }
+                    console.log({compRow, compCol, rowB, colB, rowChange, colChange});
+                    console.log({gcd});
+                }
+                while(startRow < chart.length && startRow >= 0 && startCol < chart[0].length && startCol >= 0) {
+                    if(MonitoringStation.shouldDebug && compRow === MonitoringStation.debugRow && compCol === MonitoringStation.debugCol) {
+                        console.log({startRow, startCol});
+                    }
+                    if(chart[startRow][startCol] === MonitoringStation.Asteroid) {
+                        copy[startRow][startCol] = firstFind ? copy[startRow][startCol] : MonitoringStation.Blocked;
+                        firstFind = false; 
+                    }
+                    if(MonitoringStation.shouldDebug && compRow === MonitoringStation.debugRow && compCol === MonitoringStation.debugCol) {
+                        console.log(copy);
+                    }
+                    startRow = rowB < compRow ? startRow-rowChange : startRow+rowChange;
+                    startCol = colB < compCol ? startCol-colChange : startCol+colChange;
+                }
+
+                if(MonitoringStation.shouldDebug && compRow === MonitoringStation.debugRow && compCol === MonitoringStation.debugCol) {
+                    console.log("Past While");
+                    console.log({rowB, colB, gcd, startRow, startCol});
+                    console.log("---------");
+                }
+            }
+        }
+        return copy;
+    },
     gcd: (a, b) => {
         a = Math.abs(a);
         b = Math.abs(b);
@@ -151,6 +174,76 @@ const MonitoringStation = {
             }
         }
         return largest;
+    },
+    getStationCoordinates: (visibleCounts) => {
+        let largest = -1;
+        let coordinates = [0,0];
+        for(let row=0; row < visibleCounts.length; row++) {
+            for(let col=0; col<visibleCounts[0].length; col++) {
+                if(visibleCounts[row][col] > largest) {
+                    largest = visibleCounts[row][col];
+                    coordinates = [row,col];
+                }
+            }
+        }
+        return coordinates;
+    },
+    orderOfDeletion: (chart, stationCoordinates) => {
+        let deleted = [];
+        let batch = [];
+        let distanceX, distanceY;
+        let chartCopy = MonitoringStation.copyChart(chart);
+        let visible;
+        let maxRuns = 1000;
+        let run = 0;
+        while(MonitoringStation.asteroidCount(chartCopy, stationCoordinates) > 0 && run < maxRuns) {
+            run++;
+            batch = [];
+            visible = MonitoringStation.getVisibleChart(chartCopy, stationCoordinates[0], stationCoordinates[1]);
+            for(let row = 0; row < chart.length; row++) {
+                distanceY = row - stationCoordinates[0];
+                for (let col = 0; col < chart[0].length; col++) {
+                    if(visible[row][col] === MonitoringStation.Asteroid && !(row===stationCoordinates[0] && col===stationCoordinates[1])) {
+                        distanceX = col - stationCoordinates[1];
+                        batch.push({row, col, div: distanceY/distanceX, quadrant: MonitoringStation.getQuadrant(distanceX, distanceY)});
+                        chartCopy[row][col] = MonitoringStation.deleted;
+                    }
+                }
+            }
+            batch.sort((a,b) => a.quadrant-b.quadrant || a.div-b.div);
+            batch.forEach(asteroid => {deleted.push(asteroid)});
+        }
+
+        return deleted;
+    },
+    asteroidCount: (chart, stationCoordinates) => {
+        let count = 0;
+        for(let row = 0; row < chart.length; row++) {
+            for (let col = 0; col < chart[0].length; col++) {
+                if(chart[row][col] === MonitoringStation.Asteroid && !(row===stationCoordinates[0] && col===stationCoordinates[1])) {
+                    count++;
+                }
+            }
+        }
+        if(MonitoringStation.shouldDebug) {
+            console.log("Asteroid count: " + count);
+        }
+        return count;
+    },
+    getQuadrant: (dx, dy) => {
+        // -dy = above
+        // +dy = below
+        // -dx = left
+        // +dx = right
+        if(dy < 0 && dx >= 0) {
+            return 1;
+        } else if(dy >= 0 && dx > 0) {
+            return 2;
+        } else if(dy > 0 && dx <= 0) {
+            return 3;
+        } else if(dy <= 0 && dx < 0) {
+            return 4;
+        }
     },
     copyChart(chart) {
         let copy = [];

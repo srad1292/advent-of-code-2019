@@ -1,7 +1,7 @@
 const MonitoringStation = require ('../solvers/day-10');
 
 
-describe("Solve Part One", () => {
+describe("Solve Part One - Find Max Visible", () => {
     test("Sample One", () => {
         let input = `.#..#
         .....
@@ -120,6 +120,76 @@ describe("Solve Part One", () => {
         ....####...##.#.#...#..#.##.`;
         let expected = 282;
         let actual = MonitoringStation.solvePartOne(input);
+        expect(actual).toEqual(expected);
+    });
+});
+
+
+describe("Solve Part Two - Get x Deleted Asteroid", () => {
+    test("Sample One", () => {
+        let input = `.#....#####...#..
+        ##...##.#####..##
+        ##...#...#.#####.
+        ..#.....#...###..
+        ..#.#.....#....##`;
+        let expected = 1501;
+        let actual = MonitoringStation.solvePartTwo(input, 9);
+        expect(actual).toEqual(expected);
+    });
+
+    test("Sample Two", () => {
+        let input = `.#....#####...#..
+        ##...##.#####..##
+        ##...#...#.#####.
+        ..#.....#...###..
+        ..#.#.....#....##`;
+        let expected = 801;
+        let actual = MonitoringStation.solvePartTwo(input, 1);
+        expect(actual).toEqual(expected);
+    });
+
+    test("Sample Two", () => {
+        let input = `.#....#####...#..
+        ##...##.#####..##
+        ##...#...#.#####.
+        ..#.....#...###..
+        ..#.#.....#....##`;
+        let expected = 900;
+        let actual = MonitoringStation.solvePartTwo(input, 2);
+        expect(actual).toEqual(expected);
+    });
+    
+    test("Actual Answer Two", () => {
+        let input = `###..#.##.####.##..###.#.#..
+        #..#..###..#.......####.....
+        #.###.#.##..###.##..#.###.#.
+        ..#.##..##...#.#.###.##.####
+        .#.##..####...####.###.##...
+        ##...###.#.##.##..###..#..#.
+        .##..###...#....###.....##.#
+        #..##...#..#.##..####.....#.
+        .#..#.######.#..#..####....#
+        #.##.##......#..#..####.##..
+        ##...#....#.#.##.#..#...##.#
+        ##.####.###...#.##........##
+        ......##.....#.###.##.#.#..#
+        .###..#####.#..#...#...#.###
+        ..##.###..##.#.##.#.##......
+        ......##.#.#....#..##.#.####
+        ...##..#.#.#.....##.###...##
+        .#.#..#.#....##..##.#..#.#..
+        ...#..###..##.####.#...#..##
+        #.#......#.#..##..#...#.#..#
+        ..#.##.#......#.##...#..#.##
+        #.##..#....#...#.##..#..#..#
+        #..#.#.#.##..#..#.#.#...##..
+        .#...#.........#..#....#.#.#
+        ..####.#..#..##.####.#.##.##
+        .#.######......##..#.#.##.#.
+        .#....####....###.#.#.#.####
+        ....####...##.#.#...#..#.##.`;
+        let expected = 1008;
+        let actual = MonitoringStation.solvePartTwo(input, 200);
         expect(actual).toEqual(expected);
     });
 });
