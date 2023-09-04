@@ -1,11 +1,18 @@
 const SpacePolice = require("../solvers/day-11");
 
 function solvePartOne() {
-    let startingState = getStartingState();
+    let startingState = [...getStartingState()];
     console.log(SpacePolice.solvePartOne(startingState));
 }
 
 solvePartOne();
+
+function solvePartTwo() {
+    let startingState = [...getStartingState()];
+    SpacePolice.solvePartTwo(startingState);
+}
+
+solvePartTwo();
 
 
 

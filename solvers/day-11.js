@@ -31,6 +31,8 @@ const SpacePolice = {
         Paint: 0,
         Turn: 1,
     },
+    debugPart2: false,
+    debugIntCode: false,
 
     solvePartOne: (state) => {
         // key = row-col  val = {color: black or white, painted: bool}
@@ -47,7 +49,8 @@ const SpacePolice = {
             output: -1,
             input: -1,
             phase: -1,
-            inputIndex: 0
+            inputIndex: 0,
+            relativeBase: 0
         };
 
         while(!halted) {
@@ -58,10 +61,11 @@ const SpacePolice = {
             robot.input = grid[`${position[0]}-${position[1]}`].color === SpacePolice.black ? SpacePolice.blackPanel : SpacePolice.whitePanel;
 
             // console.log({position, facing, input: robot.input});
-            output = SpacePolice.intCode(robot.state, [robot.input, robot.input], robot.instructionPointer, robot.inputIndex, true);
+            output = SpacePolice.intCode(robot.state, [robot.input, robot.input], robot.instructionPointer, robot.inputIndex, true, robot.relativeBase);
             // console.log("Pointer: " + output.instructionPointer);
             robot.state = [...output.state];
             robot.instructionPointer = output.instructionPointer;
+            robot.relativeBase = output.relativeBase;
             if(output.output.length > 0) {
                 robot.output = output.output[0];
             }
@@ -101,8 +105,107 @@ const SpacePolice = {
         });
         return paintedCount;
     },
-    solvePartTwo: (state, input) => {
-        return SpacePolice.intCode(state,[input, input], 0, 0, false);
+    solvePartTwo: (state) => {
+        // key = row-col  val = {color: black or white, painted: bool}
+        let minX = 0;
+        let maxX = 0;
+        let minY = 0;
+        let maxY = 0;
+        let position = [0,0];
+        let grid = {};
+        grid[`${position[0]}-${position[1]}`] = {color: SpacePolice.white, painted: false};
+        let facing = SpacePolice.direction.Up;
+        let outputType = SpacePolice.outputType.Paint;
+        let halted = false;
+
+        let robot = {
+            state: [...state],
+            instructionPointer: 0,
+            output: -1,
+            input: -1,
+            phase: -1,
+            inputIndex: 0,
+            relativeBase: 0
+        };
+
+        let tileColor = SpacePolice.white;
+
+        let run = 0;
+        while(!halted && robot.instructionPointer !== undefined) {
+            if(grid[`${position[0]}-${position[1]}`] === undefined) {
+                grid[`${position[0]}-${position[1]}`] = {color: SpacePolice.black, painted: false};            
+            }
+
+            if(outputType === SpacePolice.outputType.Paint) {
+                tileColor = grid[`${position[0]}-${position[1]}`].color === SpacePolice.black ? SpacePolice.blackPanel : SpacePolice.whitePanel;
+            }
+
+            robot.input = tileColor;
+
+            // console.log({position, facing, input: robot.input});
+            output = SpacePolice.intCode(robot.state, [robot.input, robot.input], robot.instructionPointer, robot.inputIndex, true, robot.relativeBase);
+            if(run < 100 && SpacePolice.debugPart2) {
+                console.log({output: output.output, halted: output.halted, instructionPointer: output.instructionPointer});
+                run++;
+            }
+            // console.log("Pointer: " + output.instructionPointer);
+            robot.state = [...output.state];
+            robot.instructionPointer = output.instructionPointer;
+            robot.relativeBase = output.relativeBase;
+            if(output.output.length > 0) {
+                robot.output = output.output[0];
+            }
+            // console.log({outputVal: robot.output});
+            robot.inputIndex = output.inputIndex;
+
+            halted = output.halted;
+
+            if(!halted) {
+                if(outputType === SpacePolice.outputType.Paint) {
+                    outputType = SpacePolice.outputType.Turn;
+                    if(grid[`${position[0]}-${position[1]}`] === undefined) {
+                        grid[`${position[0]}-${position[1]}`] = {color: SpacePolice.black, painted: false};            
+                    }
+                    grid[`${position[0]}-${position[1]}`] = {
+                        color: robot.output === SpacePolice.paintBlack ? SpacePolice.black : SpacePolice.white,
+                        painted: true
+                    };
+                    // console.log(`Painted: ${position[0]}-${position[1]} to ${robot.output === SpacePolice.paintBlack ? "black": "white"}`);
+                } else {
+                    outputType = SpacePolice.outputType.Paint;
+                    facing = SpacePolice.rotate(facing, robot.output);
+                    position = SpacePolice.move(facing, position);
+                    maxX = Math.max(position[1], maxX);
+                    minX = Math.min(position[1], minX);
+                    maxY = Math.max(position[0], maxY);
+                    minY = Math.min(position[0], minY);
+                    // console.log("Turned and moved");
+                    // console.log({facing, position});
+                }
+            }
+        }
+
+        // console.log(grid);
+        // console.log("Halted: " + `${halted ? 'yes' : 'no'}`);
+        let paintedCount = 0;
+        Object.keys(grid).forEach(key => {
+            if(grid[key].painted) {
+                paintedCount++;
+            }
+        });
+        // console.log({paintedCount, minX, maxX, minY, maxY});
+        // Output KRZEAJHB
+        for(let row = minY; row <= maxY; row++) {
+            let line = "";
+            for(let col = minX; col <= maxX; col++) {
+                if(grid[`${row}-${col}`] === undefined || grid[`${row}-${col}`].color === SpacePolice.black) {
+                    line = `${line} ⬛`;
+                } else {
+                    line = `${line} ⬜`;
+                }
+            }
+            console.log(line);
+        }
     },
     rotate: (facing, turn) => {
         if(turn === SpacePolice.turnLeft) {
@@ -122,7 +225,7 @@ const SpacePolice = {
             return [position[0], position[1]-1];
         }
     },
-    intCode: (state, input, instructionPointer, inputIndex, pauseOnOutput) => {
+    intCode: (state, input, instructionPointer, inputIndex, pauseOnOutput, relativeBase) => {
         startingState = [...state];
         let currentIndex = instructionPointer;
         let statusOK = true;
@@ -134,13 +237,15 @@ const SpacePolice = {
         let destination = 0;
         let output = [];
         let halted = false;
-        let relativeBase = 0;
         let getRWResult = {};
 
         try {
-            while(statusOK && currentIndex < state.length) {
+            while(statusOK && instructionPointer !== undefined && currentIndex < state.length) {
                 opAndParams = SpacePolice.opcodeToList(state[currentIndex]);
                 op = opAndParams[0];
+                if(SpacePolice.debugIntCode) {
+                    SpacePolice.printOp(opAndParams, currentIndex);
+                }
                 if(op === SpacePolice.endOP) {
                     halted = true;
                     break;
@@ -177,6 +282,9 @@ const SpacePolice = {
                     state = getRWResult.state;
                     destination = getRWResult.value;
                     
+                    if(SpacePolice.debugIntCode) {
+                        console.log(`Saving ${input[inputIndex]} into location ${destination}`);
+                    }
                     state[destination] = input[inputIndex];
                     if(inputIndex<input.length-1) {
                         inputIndex++;
@@ -201,6 +309,9 @@ const SpacePolice = {
 
                     let shouldJump = (op===SpacePolice.jumpIfTrueOP&&valueA!==0) || (op===SpacePolice.jumpIfFalseOP&&valueA===0);
                     currentIndex = shouldJump ? destination : currentIndex+3;
+                    if(SpacePolice.debugIntCode) {
+                        console.log(`Checking against value ${valueA} -- Should jump ${shouldJump} -- Moving to ${currentIndex}`);
+                    }
 
                 } else if(op === SpacePolice.relBaseOP) {
                     getRWResult = SpacePolice.getReadParamValue(state, currentIndex, relativeBase, 1, opAndParams);
@@ -213,13 +324,42 @@ const SpacePolice = {
                     break;
                 }
             }
-            return {state, output, halted, instructionPointer: currentIndex, inputIndex};
+            return {state, output, halted, instructionPointer: currentIndex, inputIndex, relativeBase};
         } catch(e) {
             console.log("Error while creating alarm program state");
             console.log(e);
             console.log({state, output, halted, instructionPointer: currentIndex});
-            return {state, output, halted, instructionPointer: currentIndex};
+            return {state, output, halted, instructionPointer: currentIndex, relativeBase};
         }
+    },
+    printOp: (opAndParams, currentIndex) => {
+        let op = SpacePolice.opToName(opAndParams[0]);
+        console.log(`Instruction ${currentIndex}: ${op}`);
+    },
+    opToName: (op) => {
+        if(op === SpacePolice.addOP) {
+            return 'Add';
+        } else if(op === SpacePolice.multOP) {
+            return 'Multiply';
+        } else if(op === SpacePolice.saveOP) {
+            return 'Save';
+        } else if(op === SpacePolice.outputOP) {
+            return 'Output';
+        } else if(op === SpacePolice.jumpIfTrueOP) {
+            return 'Jump If True';
+        } else if(op === SpacePolice.jumpIfFalseOP) {
+            return 'Jump If False';
+        } else if(op === SpacePolice.lessThanOP) {
+            return 'Less Than';
+        }  else if(op === SpacePolice.equalsOP) {
+            return 'Equals';
+        } else if(op === SpacePolice.relBaseOP) {
+            return 'Change Relative Base';
+        } else if(op === SpacePolice.endOP) {
+            return 'Halt';
+        }
+
+        return 'Unknown OP';
     },
     expandMemory(state, idx) {
         let end = idx-(state.length-1);
@@ -299,6 +439,12 @@ const SpacePolice = {
         }
         return permutations;
     },
+    day9SolvePartOne: (state, input) => {
+        return SpacePolice.intCode(state,[input, input], 0, 0, false,0);
+    },
+    day9SolvePartTwo: (state, input) => {
+        return SpacePolice.intCode(state,[input, input], 0, 0, false,0);
+    },
     day7SolvePartOne: (state, input, phaseSettings) => {
         const permutations = SpacePolice.buildPermutations(phaseSettings);
         let maxSignal = -1;
@@ -307,7 +453,7 @@ const SpacePolice = {
         permutations.forEach(permutation => {
             nextInput = input;
             permutation.forEach(phase => {
-                output = SpacePolice.intCode(state,[phase,nextInput], 0, 0, false).output;
+                output = SpacePolice.intCode(state,[phase,nextInput], 0, 0, false, 0).output;
                 nextInput = output[output.length-1];
             });
             maxSignal = Math.max(maxSignal, nextInput);
@@ -340,7 +486,7 @@ const SpacePolice = {
             });
             while(!halted) {
                 amplifier = amplifiers[amplifierIndex];
-                output = SpacePolice.intCode(amplifier.state, [amplifier.phase, amplifier.input], amplifier.instructionPointer, amplifier.inputIndex, true);
+                output = SpacePolice.intCode(amplifier.state, [amplifier.phase, amplifier.input], amplifier.instructionPointer, amplifier.inputIndex, true, 0);
                 amplifier.state = [...output.state];
                 amplifier.instructionPointer = output.instructionPointer;
                 if(output.output.length > 0) {
