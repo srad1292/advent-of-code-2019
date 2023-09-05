@@ -130,3 +130,36 @@ describe("Solve Part One", () => {
         expect(actual).toEqual(expected);
     });
 });
+
+
+describe("Solve Part Two", () => {
+    test("Sample 1", () => {
+        let input = `<x=-1, y=0, z=2>
+        <x=2, y=-10, z=-7>
+        <x=4, y=-8, z=8>
+        <x=3, y=5, z=-1>`;
+        let actual = BodyProblem.solvePartTwo(input);
+        let expected = 2772;
+        expect(actual).toEqual(expected);
+    });
+
+    test("Sample 2", () => {
+        let input = `<x=-8, y=-10, z=0>
+        <x=5, y=5, z=10>
+        <x=2, y=-7, z=3>
+        <x=9, y=-8, z=-3>`;
+        let actual = BodyProblem.solvePartTwo(input);
+        let expected = 4686774924;
+        expect(actual).toEqual(expected);
+    });
+
+    test("Actual", () => {
+        let input = `<x=-16, y=15, z=-9>
+        <x=-14, y=5, z=4>
+        <x=2, y=0, z=6>
+        <x=-3, y=18, z=9>`;
+        let actual = BodyProblem.solvePartTwo(input);
+        let expected = 303459551979256;
+        expect(actual).toEqual(expected);
+    });
+});

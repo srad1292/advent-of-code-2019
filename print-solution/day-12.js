@@ -40,11 +40,12 @@ function solvePartTwo() {
     <x=2, y=0, z=6>
     <x=-3, y=18, z=9>`;
 
-    let stepsForRepeat = BodyProblem.solvePartTwo(input, 4686774927);
+    let stepsForRepeat = BodyProblem.solvePartTwo(testInput);
     console.log(stepsForRepeat);
 }
 
+// 2772
 // 4686774924
-// 55151147929308720000
+// 303459551979256
 
 solvePartTwo();
