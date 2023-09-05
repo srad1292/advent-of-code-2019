@@ -11,6 +11,7 @@ const CrossedWires = {
         let closestDistance;
         let currDistance;
         let coordStr = '';
+        let steps;
         wires[0].forEach(move => {
             instruction = CrossedWires.convertMoveStringToInstruction(move);
             for(let idx = 1; idx <= instruction[1]; idx++) {

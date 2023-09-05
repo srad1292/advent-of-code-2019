@@ -75,7 +75,6 @@ const AmplificationCircuit = {
         return maxSignal;
     },
     intCode: (state, input, instructionPointer, inputIndex, pauseOnOutput) => {
-        startingState = [...state];
         let currentIndex = instructionPointer;
         let statusOK = true;
         let op = 0;

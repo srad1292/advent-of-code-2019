@@ -13,6 +13,7 @@ const UniversalOrbitMap = {
         let orbitMap = {};
         let orbits = input.split("\n");
         let orbiting, orbited;
+        let objects;
         orbits.forEach(orbit => {
             objects = orbit.split(")");
             orbiting = objects[1].trim();

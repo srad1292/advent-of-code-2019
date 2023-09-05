@@ -22,7 +22,6 @@ const SensorBoost = {
         return SensorBoost.intCode(state,[input, input], 0, 0, false);
     },
     intCode: (state, input, instructionPointer, inputIndex, pauseOnOutput) => {
-        startingState = [...state];
         let currentIndex = instructionPointer;
         let statusOK = true;
         let op = 0;

@@ -3,7 +3,6 @@ const AlarmProgram = {
     multOP: 2,
     endOP: 99,
     solve: (state) => {
-        startingState = [...state];
         let currentIndex = 0;
         let statusOK = true;
         let op = 0;

@@ -51,6 +51,7 @@ const CarePackage = {
         };
 
         let blockCount = 0;
+        let output;
 
         while(!halted) {
             output = CarePackage.intCode(arcade.state, [arcade.input, arcade.input], arcade.instructionPointer, arcade.inputIndex, true, arcade.relativeBase);
@@ -88,7 +89,6 @@ const CarePackage = {
         return blockCount;
     },
     intCode: (state, input, instructionPointer, inputIndex, pauseOnOutput, relativeBase) => {
-        startingState = [...state];
         let currentIndex = instructionPointer;
         let statusOK = true;
         let op = 0;

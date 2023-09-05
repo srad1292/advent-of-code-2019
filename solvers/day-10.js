@@ -210,6 +210,7 @@ const MonitoringStation = {
                     }
                 }
             }
+            // @ts-ignore
             batch.sort((a,b) => a.quadrant-b.quadrant || a.div-b.div);
             batch.forEach(asteroid => {deleted.push(asteroid)});
         }

@@ -52,6 +52,7 @@ const SpacePolice = {
             inputIndex: 0,
             relativeBase: 0
         };
+        let output;
 
         while(!halted) {
             if(grid[`${position[0]}-${position[1]}`] === undefined) {
@@ -128,8 +129,8 @@ const SpacePolice = {
             relativeBase: 0
         };
 
-        let tileColor = SpacePolice.white;
-
+        let tileColor = SpacePolice.whitePanel;
+        let output;
         let run = 0;
         while(!halted && robot.instructionPointer !== undefined) {
             if(grid[`${position[0]}-${position[1]}`] === undefined) {
@@ -226,7 +227,6 @@ const SpacePolice = {
         }
     },
     intCode: (state, input, instructionPointer, inputIndex, pauseOnOutput, relativeBase) => {
-        startingState = [...state];
         let currentIndex = instructionPointer;
         let statusOK = true;
         let op = 0;

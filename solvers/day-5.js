@@ -21,7 +21,6 @@ const SunnyAsteroids = {
         return result.output[result.output.length-1];
     },
     intCode: (state, input) => {
-        startingState = [...state];
         let currentIndex = 0;
         let statusOK = true;
         let op = 0;

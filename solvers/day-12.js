@@ -88,7 +88,7 @@ const BodyProblem = {
     },
     solvePartTwo: (input) => {
         let moons = BodyProblem.inputToMoons(input);
-        stepsForRepeat = BodyProblem.findRepeat(moons);
+        let stepsForRepeat = BodyProblem.findRepeat(moons);
         return stepsForRepeat;
     },
     inputToMoons: (input) => {
@@ -144,6 +144,7 @@ const BodyProblem = {
         let positions = {};
 
         let repeatsX, repeatsY, repeatsZ;
+        let atStart;
         // Loops for each axis are independent of each other 
         // Also it's quicker to find the steps for repeating for each axis one at a time
         // So for each axis, find the steps to repeat

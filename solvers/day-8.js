@@ -57,7 +57,7 @@ const SpaceImageFormat = {
             currentBit = 2;
             for(let layer = 0; layer < layers.length; layer++) {
                 if(layers[layer][idx] !== '2') {
-                    currentBit = layers[layer][idx];
+                    currentBit = parseInt(layers[layer][idx]);
                     break;
                 }
             }
@@ -67,7 +67,7 @@ const SpaceImageFormat = {
         message.forEach(row => {
             let line = "";
             row.forEach(col => {
-                if(col === "1") {
+                if(col === 1) {
                     line = `${line} ⬛`;
                 } else {
                     line = `${line} ⬜`;
@@ -76,23 +76,6 @@ const SpaceImageFormat = {
             console.log(line);
         });
     },
-    createLayers: (input, columns, rows) => {
-        let layers = [];
-        let layer = [];
-        let row = [];
-        let idx = 0;
-        while(idx < input.length) {
-            layer = [];
-            for(let row = 0; row < rows; row++) {
-                row = [];
-                for(let col = 0; col < columns; col++) {
-                    row.push(input[idx]);
-                }
-                layer.push(row);
-            }
-            layers.push(layer);
-        }
-    }
 }
 
 module.exports = SpaceImageFormat;

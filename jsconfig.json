@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+      "noImplicitAny": false,
+      "noImplicitThis": false,
+      "noImplicitReturns": false,
+      "noUnusedLocals": true,
+      "strict": true,
+      "checkJs": true,
+      "target": "esnext"
+    }
+  }
