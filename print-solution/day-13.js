@@ -6,14 +6,14 @@ function solvePartOne() {
     console.log("Block Count: " + blockCount);
 }
 
-// solvePartOne();
+solvePartOne();
 
 function solvePartTwo() {
     let startingState = [...getStartingState()];
     startingState[0] = 2;
     let score = CarePackage.solvePartTwo(startingState);
     console.log("Score: " + score);
-
+    // 15988
 }
 
 solvePartTwo();

@@ -25,17 +25,10 @@ const HorizontalDirection = {
     Right: 1,
 }
 
-const JoystickDirection = {
-    neutral: 0,
-    left: -1,
-    right: 1,
-}
-
 class Ball {
     constructor(position) {
         this.lastPosition = [position[1], position[0]];
         this.position = [position[1], position[0]];
-        console.log("Putting ball at: " + position);
         this.vertical = VerticalDirection.Stationary;
         this.horizontal = HorizontalDirection.Stationary;
     }
@@ -78,7 +71,7 @@ const CarePackage = {
     maxParams: 2,
 
     debugPart1: false,
-    debugPart2: true,
+    debugPart2: false,
     debugIntCode: false,
 
     solvePartOne: (state) => {
@@ -176,8 +169,7 @@ const CarePackage = {
                 arcade.input = Math.sign(CarePackage.determineJoystickInput(grid, paddle, ball));
                 arcade.phase = arcade.input;
                 if(CarePackage.debugPart2 && outType === OutputType.TileId && outType === OutputType.TileId) {
-                    // CarePackage.printBoard(score, grid, minX, maxX, minY, maxY);
-                    console.log("Moving Paddle: " + arcade.input);
+                    CarePackage.printBoard(score, grid, minX, maxX, minY, maxY);
                 }
             }
             
@@ -199,7 +191,7 @@ const CarePackage = {
                 } else if(outType === OutputType.YPos) {
                     position[1] = arcade.output;
                     outType = position[0] === -1 && position[1] === 0 ? OutputType.UpdateScore : OutputType.TileId;
-                } else if(outType = OutputType.TileId) {
+                } else if(outType === OutputType.TileId) {
                     maxX = Math.max(position[1], maxX);
                     minX = Math.min(position[1], minX);
                     maxY = Math.max(position[0], maxY);
@@ -219,9 +211,6 @@ const CarePackage = {
                     if(ball === undefined && arcade.output === Tile.Ball) {
                         ball = new Ball(position);
                     } else if(ball !== undefined && arcade.output === Tile.Ball) {
-                        // if(CarePackage.debugPart2) {
-                        //     console.log("Updating ball with new pos");
-                        // }
                         ball.update(position);
                     }
 
@@ -233,11 +222,6 @@ const CarePackage = {
 
                     grid[`${position[0]}-${position[1]}`].tileType = arcade.output;
                     outType = OutputType.XPos;
-
-                    if(ball !== undefined && ball.vertical !== VerticalDirection.Stationary && CarePackage.debugPart2) {
-                        // CarePackage.printBoard(score, grid, minX, maxX, minY, maxY);
-                    }
-
                 } else {
                     score = arcade.output;
                     outType = OutputType.XPos;
@@ -274,43 +258,7 @@ const CarePackage = {
         console.log("Score: " + score + "\n\n");
     },
     determineJoystickInput: (grid, paddle, ball) => {
-        // If ball moving up, just keep paddle in line with it
-        if(ball.vertical === VerticalDirection.up) {
-            // Ex ball at 4 and paddle at 5.  4-5 = -1 which would move left like expected
-            return Math.sign(ball.position[1]-paddle.position[1]);
-        } else if(ball.vertical === VerticalDirection.Stationary) {
-            // Ball not moving so don't move paddle yet
-            return HorizontalDirection.Stationary;
-        } else {
-            // Ball is moving down, so calculate where it will be when it gets to paddle row and move there
-            let collisionPoint = CarePackage.findCollisionPoint(grid, ball, paddle);
-            // Ex paddle at 4 and collision point at 5
-            // 5-4 = 1 = move paddle to right 
-            return Math.sign(collisionPoint[1]-paddle.position[1]);
-        }
-    },
-    findCollisionPoint: (grid, ball, paddle) => {
-        let simulatedBall = new Ball(ball.position);
-        let row = 0;
-        let col = 0;
-        while(simulatedBall.position[0] < paddle.position[0]) {
-            row = simulatedBall.position[0];
-            col = simulatedBall.position[1]; 
-            // console.log({paddle: paddle.position, simulatedBall.position});
-            console.log({paddle: paddle.position});
-            // Need to simulate hitting blocks and going up+down
-            if(simulatedBall.horizontal === HorizontalDirection.Left && grid[`${col}-${row}`] !== undefined && grid[`${col}-${row}`].tileType === Tile.Wall) {
-                simulatedBall.update([row+1,col+1]);
-            } else if(simulatedBall.horizontal === HorizontalDirection.Left) {
-                simulatedBall.update([row+1,col-1]);
-            } else if(simulatedBall.horizontal === HorizontalDirection.Right && grid[`${col}-${row}`] !== undefined && grid[`${col}-${row}`].tileType === Tile.Wall) {
-                simulatedBall.update([row+1,col-1]);
-            } else {
-                simulatedBall.update([row+1,col+1]);
-            }
-        }
-        console.log({collision: simulatedBall.position});
-        return simulatedBall.position;
+        return Math.sign(ball.position[1]-paddle.position[1]);
     },
     intCode: (state, input, instructionPointer, inputIndex, pauseOnOutput, relativeBase) => {
         let currentIndex = instructionPointer;
