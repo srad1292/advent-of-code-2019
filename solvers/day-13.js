@@ -10,6 +10,55 @@ const OutputType = {
     XPos: 0,
     YPos: 1,
     TileId: 2,
+    UpdateScore: 3,
+}
+
+const VerticalDirection = {
+    Stationary: 0,
+    Up: -1,
+    Down: 1,
+}
+
+const HorizontalDirection = {
+    Stationary: 0,
+    Left: -1,
+    Right: 1,
+}
+
+const JoystickDirection = {
+    neutral: 0,
+    left: -1,
+    right: 1,
+}
+
+class Ball {
+    constructor(position) {
+        this.lastPosition = [position[1], position[0]];
+        this.position = [position[1], position[0]];
+        console.log("Putting ball at: " + position);
+        this.vertical = VerticalDirection.Stationary;
+        this.horizontal = HorizontalDirection.Stationary;
+    }
+    update(newPos) {
+        this.lastPosition = [...this.position];
+        this.position = [newPos[1], newPos[0]];
+        if(this.position[0] !== this.lastPosition[0]) {
+            this.vertical = Math.sign(this.position[0]-this.lastPosition[0]);
+        }
+        if(this.position[1] !== this.lastPosition[1]) {
+            this.horizontal = Math.sign(this.position[1]-this.lastPosition[1]);
+        }
+    }
+
+}
+
+class Paddle {
+    constructor(position){
+        this.position = [position[1], position[0]];
+    }
+    update(newPos) {
+        this.position = [newPos[1], newPos[0]];
+    }
 }
 
 const CarePackage = {
@@ -29,7 +78,7 @@ const CarePackage = {
     maxParams: 2,
 
     debugPart1: false,
-    debugPart2: false,
+    debugPart2: true,
     debugIntCode: false,
 
     solvePartOne: (state) => {
@@ -87,6 +136,181 @@ const CarePackage = {
             }
         }
         return blockCount;
+    },
+    solvePartTwo: (state) => {
+        // key = row-col  val = {tileType: Tile}
+        let position = [0,0];
+        let grid = {};
+        grid[`${position[0]}-${position[1]}`] = {tileType: Tile.Empty};
+        let outType = OutputType.XPos;
+        let halted = false;
+
+        let minX = 0;
+        let maxX = 0;
+        let minY = 0;
+        let maxY = 0;
+
+        let ball = undefined;
+        let paddle = undefined;
+
+        let arcade = {
+            state: [...state],
+            instructionPointer: 0,
+            output: -1,
+            input: 0,
+            phase: 0,
+            inputIndex: 0,
+            relativeBase: 0
+        };
+
+        let blockCount = 0;
+        let score = 0;
+        let output;
+        let draws = 0;
+
+        let drawsBeforePlaying = 924;
+
+        while(!halted) {
+            
+            if(ball !== undefined && paddle !== undefined && draws >= drawsBeforePlaying) {
+                arcade.input = Math.sign(CarePackage.determineJoystickInput(grid, paddle, ball));
+                arcade.phase = arcade.input;
+                if(CarePackage.debugPart2 && outType === OutputType.TileId && outType === OutputType.TileId) {
+                    // CarePackage.printBoard(score, grid, minX, maxX, minY, maxY);
+                    console.log("Moving Paddle: " + arcade.input);
+                }
+            }
+            
+            output = CarePackage.intCode(arcade.state, [arcade.input, arcade.input], arcade.instructionPointer, arcade.inputIndex, true, arcade.relativeBase);
+            arcade.state = [...output.state];
+            arcade.instructionPointer = output.instructionPointer;
+            arcade.relativeBase = output.relativeBase;
+            if(output.output.length > 0) {
+                arcade.output = output.output[0];
+            }
+            arcade.inputIndex = output.inputIndex;
+
+            halted = output.halted;
+
+            if(!halted) {
+                if(outType === OutputType.XPos) {
+                    position[0] = arcade.output;
+                    outType++;
+                } else if(outType === OutputType.YPos) {
+                    position[1] = arcade.output;
+                    outType = position[0] === -1 && position[1] === 0 ? OutputType.UpdateScore : OutputType.TileId;
+                } else if(outType = OutputType.TileId) {
+                    maxX = Math.max(position[1], maxX);
+                    minX = Math.min(position[1], minX);
+                    maxY = Math.max(position[0], maxY);
+                    minY = Math.min(position[0], minY);
+
+                    draws++;
+                    
+                    if(grid[`${position[0]}-${position[1]}`] === undefined) {
+                        grid[`${position[0]}-${position[1]}`] = {tileType: Tile.Empty};           
+                    } 
+                    if(grid[`${position[0]}-${position[1]}`].tileType === Tile.Block && arcade.output !== Tile.Block) {
+                        blockCount = Math.max(0, blockCount-1);           
+                    } else if(grid[`${position[0]}-${position[1]}`].tileType !== Tile.Block && arcade.output === Tile.Block) {
+                        blockCount++;
+                    }
+
+                    if(ball === undefined && arcade.output === Tile.Ball) {
+                        ball = new Ball(position);
+                    } else if(ball !== undefined && arcade.output === Tile.Ball) {
+                        // if(CarePackage.debugPart2) {
+                        //     console.log("Updating ball with new pos");
+                        // }
+                        ball.update(position);
+                    }
+
+                    if(paddle === undefined && arcade.output === Tile.HorPaddle) {
+                        paddle = new Paddle(position);
+                    } else if(paddle !== undefined && arcade.output === Tile.HorPaddle) {
+                        paddle.update(position);
+                    }
+
+                    grid[`${position[0]}-${position[1]}`].tileType = arcade.output;
+                    outType = OutputType.XPos;
+
+                    if(ball !== undefined && ball.vertical !== VerticalDirection.Stationary && CarePackage.debugPart2) {
+                        // CarePackage.printBoard(score, grid, minX, maxX, minY, maxY);
+                    }
+
+                } else {
+                    score = arcade.output;
+                    outType = OutputType.XPos;
+                }
+            }
+        }
+
+        if(CarePackage.debugPart2) {
+            console.log("Final Board");
+            CarePackage.printBoard(score, grid, minX, maxX, minY, maxY);
+        }
+        
+
+        return score;
+    },
+    printBoard: (score, grid, minX, maxX, minY, maxY) => {
+        for(let col = minX; col <= maxX; col++) {
+            let line = "";
+            for(let row = minY; row <= maxY; row++) {
+                if(grid[`${row}-${col}`] === undefined || grid[`${row}-${col}`].tileType === Tile.Empty) {
+                    line = `${line} `;
+                } else if(grid[`${row}-${col}`].tileType === Tile.Block){
+                    line = `${line}X`;
+                }  else if(grid[`${row}-${col}`].tileType === Tile.Ball){
+                    line = `${line}O`;
+                }  else if(grid[`${row}-${col}`].tileType === Tile.HorPaddle){
+                    line = `${line}_`;
+                }  else if(grid[`${row}-${col}`].tileType === Tile.Wall){
+                    line = `${line}|`;
+                }
+            }
+            console.log(line);
+        }
+        console.log("Score: " + score + "\n\n");
+    },
+    determineJoystickInput: (grid, paddle, ball) => {
+        // If ball moving up, just keep paddle in line with it
+        if(ball.vertical === VerticalDirection.up) {
+            // Ex ball at 4 and paddle at 5.  4-5 = -1 which would move left like expected
+            return Math.sign(ball.position[1]-paddle.position[1]);
+        } else if(ball.vertical === VerticalDirection.Stationary) {
+            // Ball not moving so don't move paddle yet
+            return HorizontalDirection.Stationary;
+        } else {
+            // Ball is moving down, so calculate where it will be when it gets to paddle row and move there
+            let collisionPoint = CarePackage.findCollisionPoint(grid, ball, paddle);
+            // Ex paddle at 4 and collision point at 5
+            // 5-4 = 1 = move paddle to right 
+            return Math.sign(collisionPoint[1]-paddle.position[1]);
+        }
+    },
+    findCollisionPoint: (grid, ball, paddle) => {
+        let simulatedBall = new Ball(ball.position);
+        let row = 0;
+        let col = 0;
+        while(simulatedBall.position[0] < paddle.position[0]) {
+            row = simulatedBall.position[0];
+            col = simulatedBall.position[1]; 
+            // console.log({paddle: paddle.position, simulatedBall.position});
+            console.log({paddle: paddle.position});
+            // Need to simulate hitting blocks and going up+down
+            if(simulatedBall.horizontal === HorizontalDirection.Left && grid[`${col}-${row}`] !== undefined && grid[`${col}-${row}`].tileType === Tile.Wall) {
+                simulatedBall.update([row+1,col+1]);
+            } else if(simulatedBall.horizontal === HorizontalDirection.Left) {
+                simulatedBall.update([row+1,col-1]);
+            } else if(simulatedBall.horizontal === HorizontalDirection.Right && grid[`${col}-${row}`] !== undefined && grid[`${col}-${row}`].tileType === Tile.Wall) {
+                simulatedBall.update([row+1,col-1]);
+            } else {
+                simulatedBall.update([row+1,col+1]);
+            }
+        }
+        console.log({collision: simulatedBall.position});
+        return simulatedBall.position;
     },
     intCode: (state, input, instructionPointer, inputIndex, pauseOnOutput, relativeBase) => {
         let currentIndex = instructionPointer;

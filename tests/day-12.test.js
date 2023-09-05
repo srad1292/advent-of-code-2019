@@ -1,6 +1,5 @@
 const Day12 = require('../solvers/day-12');
 const BodyProblem = Day12.BodyProblem;
-const Moon = Day12.Moon;
 const Vector3 = Day12.Vector3;
 
 describe("Parse Input", () => {
