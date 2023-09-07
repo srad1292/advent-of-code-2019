@@ -32,6 +32,18 @@ function solvePartOne() {
 
 solvePartOne();
 
+function solvePartTwo() {
+    let input = ``;
+    let cost = 0;
+    
+    console.log("===Part Two===");
+    input = getActualInputPartOne();
+    cost = ReactionChemical.solvePartTwo(input);
+    console.log("Amount of fuel you can make should be 4215654.  Is: " + cost);
+}
+
+solvePartTwo();
+
 
 
 

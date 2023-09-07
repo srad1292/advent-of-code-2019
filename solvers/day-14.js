@@ -43,6 +43,7 @@ class ReactionChemical {
 
 const SpaceFactory = {
     debugPartOne: false,
+    debugPartTwo: false,
     debugFactory: false,
     solvePartOne: (input) => {
         const reactionsAndMaterials = SpaceFactory.inputToReactionsAndMaterials(input);
@@ -55,11 +56,83 @@ const SpaceFactory = {
         if(SpaceFactory.debugPartOne) {
             Object.values(materials).forEach(material => console.log(material.toString()));
         }
-        let costForFuel = SpaceFactory.findOreCostsForFuel(reactions, materials);
+        let costForFuel = SpaceFactory.findOreCostsForFuel(reactions, materials, 1);
         if(SpaceFactory.debugPartOne) {
             Object.values(materials).forEach(material => console.log(material.toString()));
         }
         return costForFuel;
+        
+    },
+    solvePartTwo: (input) => {
+        const reactionsAndMaterials = SpaceFactory.inputToReactionsAndMaterials(input);
+        let reactions = reactionsAndMaterials.reactions;
+        if(SpaceFactory.debugPartTwo) {
+            Object.values(reactions).forEach(reaction => console.log(reaction.toString()));
+        }
+
+        let materials = reactionsAndMaterials.materials;
+        if(SpaceFactory.debugPartTwo) {
+            Object.values(materials).forEach(material => console.log(material.toString()));
+        }
+
+        let oreMined = 0;
+        let maxOre = 1000000000000;
+        let fuelToMake = 4200000;
+        let maxTries = 4300000;
+
+        while(oreMined <= maxOre && fuelToMake < maxTries) {
+            oreMined = SpaceFactory.findOreCostsForFuel(reactions, materials, fuelToMake);
+            fuelToMake++;
+        }
+
+        if(SpaceFactory.debugPartTwo) {
+            Object.values(materials).forEach(material => console.log(material.toString()));
+            console.log("Ore Mined: " + oreMined);
+        }
+        return fuelToMake > maxTries ? -1 : oreMined <= maxOre ? fuelToMake-1 : fuelToMake-2;
+        
+    },
+    solvePartTwoOld: (input) => {
+        const reactionsAndMaterials = SpaceFactory.inputToReactionsAndMaterials(input);
+        let reactions = reactionsAndMaterials.reactions;
+        if(SpaceFactory.debugPartTwo) {
+            Object.values(reactions).forEach(reaction => console.log(reaction.toString()));
+            console.log("");
+        }
+
+        let materials = reactionsAndMaterials.materials;
+        if(SpaceFactory.debugPartTwo) {
+            Object.values(materials).forEach(material => console.log(material.toString()));
+            console.log("");
+        }
+
+        const OreStoppingPoint = 1000000000000;
+        let oreMined = 0;
+        let fuelProduced = 0;
+        let excess = {};
+        while(oreMined < OreStoppingPoint) {
+            if(SpaceFactory.debugPartTwo && fuelProduced < 4) {
+                console.log("Excess when " + fuelProduced + " fuel produced");  
+                console.log(excess);
+            }
+            let response = SpaceFactory.simulateFactory(reactions, materials, excess);
+            excess = response.excess;
+            oreMined += response.oreProduced;
+            if(SpaceFactory.debugPartTwo && fuelProduced < 4) {
+                console.log("Ore Mined: " + oreMined + " -- fuel Produced" + fuelProduced);
+            }  
+            if(oreMined < OreStoppingPoint) {
+                fuelProduced++;
+            }
+        }
+        
+        
+        if(SpaceFactory.debugPartTwo) {
+            console.log("");
+            Object.values(materials).forEach(material => console.log(material.toString()));
+        }
+
+        return fuelProduced;
         
     },
     inputToReactionsAndMaterials: (input) => {
@@ -99,13 +172,13 @@ const SpaceFactory = {
         
         return {reactions, materials};
     },
-    findOreCostsForFuel: (reactions, materials) => {
+    findOreCostsForFuel: (reactions, materials, fuelReactions) => {
 
         let fuelReaction = reactions[Basics.Fuel];
         if(SpaceFactory.debugFactory){ 
             console.log("Fuel Reaction: " + fuelReaction.toString());
         }
-        let basicBlockCounts = SpaceFactory.breakDownReaction({}, {}, reactions, fuelReaction, 1, materials);
+        let basicBlockCounts = SpaceFactory.breakDownReaction({}, {}, reactions, fuelReaction, fuelReactions, materials);
 
         if(SpaceFactory.debugFactory){ 
             console.log({basicBlockCounts});
@@ -166,6 +239,29 @@ const SpaceFactory = {
 
 
         return basicBlockCounts;
+    },
+    // Originally for part 2 I thought I could simulate running factory and 
+    // Keeping up with excess, and run until max ore reached
+    // This worked but was slow
+    // Wanted to keep it in though
+    simulateFactory: (reactions, materials, excess) => {
+
+        let fuelReaction = reactions[Basics.Fuel];
+        if(SpaceFactory.debugFactory){ 
+            console.log("Fuel Reaction: " + fuelReaction.toString());
+        }
+        let basicBlockCounts = SpaceFactory.breakDownReaction({}, excess, reactions, fuelReaction, 1, materials);
+
+        if(SpaceFactory.debugFactory){ 
+            console.log({basicBlockCounts});
+        }
+
+        // Go through each count of basic material and get minimum fuel to produce that number of that material
+        let oreProduced = Object.keys(basicBlockCounts).reduce((accum, name) => accum+materials[name].getOreToProduce(basicBlockCounts[name]),0);
+        if(SpaceFactory.debugFactory) {
+            console.log("Produced " + oreProduced + " ore");
+        }
+        return {oreProduced, excess};
     },
 }
 
