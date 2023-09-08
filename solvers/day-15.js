@@ -222,6 +222,7 @@ const Tile = {
     Wall: '|',
     TopBotWall: '-',
     Target: 'X',
+    Oxygen: 'O',
     OutOfBound: ' ',
     Robot: 'R',
 }
@@ -257,6 +258,7 @@ class Robot {
         this.calls = 0;
         this.minCoords = new Vector2(0,0);
         this.maxCoords = new Vector2(0,0);
+        this.oxygenSystem = new Vector2(0,0);
     }
     buildGridToFindOxygenSystem() {
         // I can't just stop when I find the system
@@ -276,7 +278,7 @@ class Robot {
         let positionToCheck, positionKey, snapshot; 
         let copy = this.brain.getCurrentInstance();
         this.directions.forEach(direction => { 
-            positionToCheck = this.move(position, direction);
+            positionToCheck = this.moveOne(position,direction);
             positionKey = positionToCheck.toString();
             if(grid[positionKey] === undefined) {
                 // console.log("positionKey: " + positionKey + " Direction: " + direction + " Calls: " + this.calls);
@@ -294,13 +296,14 @@ class Robot {
                     grid = this.checkNeighbors(grid, positionToCheck);
                 } else if(snapshot.output[0] === Status.FoundTarget) {
                     grid[positionKey] = Tile.Target;
+                    this.oxygenSystem = new Vector2(positionToCheck.vertical, positionToCheck.horizontal);
                     grid = this.checkNeighbors(grid, positionToCheck);
                 } 
             }
         });
         return grid;        
     }
-    move(position, direction) {
+    moveOne(position,direction) {
         let newPosition = new Vector2(position.vertical, position.horizontal);
         if(direction === Direction.North) {
             newPosition.vertical--;
@@ -325,7 +328,7 @@ class Robot {
             if(wouldBeMovingBackwards) {
                 return;
             }
-            positionToCheck = this.move(position, direction);
+            positionToCheck = this.moveOne(position,direction);
             positionKey = positionToCheck.toString();
             if(grid[positionKey] === Tile.Path) {
                 shortestFromHere = this.findShortestDistanceToTarget(grid, [...path, positionKey], positionToCheck, steps+1, shortestFromHere,direction);
@@ -345,12 +348,42 @@ const OxygenSystem = {
     solvePartOne: (state) => {
         let robot = new Robot(0,0,state,OxygenSystem.debugIntCode);
         let grid = robot.buildGridToFindOxygenSystem();
-        // console.log(robot.minCoords.toString());
-        // console.log(robot.maxCoords.toString());
         // OxygenSystem.printGrid(grid, robot.minCoords, robot.maxCoords);
-        // findShortestPath to oxygen system
         let shortestDistance = robot.findShortestDistanceToTarget(grid, [], new Vector2(0,0),0,Number.MAX_SAFE_INTEGER,undefined);
         return shortestDistance;
+    },
+    solvePartTwo: (state) => {
+        let robot = new Robot(0,0,state,OxygenSystem.debugIntCode);
+        let grid = robot.buildGridToFindOxygenSystem();
+        // OxygenSystem.printGrid(grid, robot.minCoords, robot.maxCoords);
+        let minutes = OxygenSystem.fillWithOxygen(grid, robot);
+        return minutes;
+    },
+    fillWithOxygen: (grid, robot) => {
+        let robotOrOxygen = [robot.oxygenSystem];
+        let nextRun = [];
+        let position;
+        let neighbor;
+        let minutes = 0;
+        let directions = [Direction.North,Direction.South,Direction.West,Direction.East]
+        while(robotOrOxygen.length > 0) {    
+            while(robotOrOxygen.length > 0) {
+                position = robotOrOxygen.shift();
+                directions.forEach(direction => {
+                    neighbor = OxygenSystem.moveOne(position,direction);
+                    if(grid[neighbor.toString()] === Tile.Path) {
+                        nextRun.push(neighbor);
+                        grid[neighbor.toString()] = Tile.Oxygen;
+                    }
+                });
+            }
+            if(nextRun.length > 0) {
+                minutes++;
+            }
+            robotOrOxygen = [...nextRun];
+            nextRun = [];
+        }
+        return minutes;
     },
     printGrid(grid, min, max) {
         for(let v = min.vertical; v <= max.vertical; v++) {
@@ -370,6 +403,19 @@ const OxygenSystem = {
             }   
             console.log(line);         
         }
+    },
+    moveOne(position,direction) {
+        let newPosition = new Vector2(position.vertical, position.horizontal);
+        if(direction === Direction.North) {
+            newPosition.vertical--;
+        } else if(direction === Direction.South) {
+            newPosition.vertical++;
+        } else if(direction === Direction.West) {
+            newPosition.horizontal--;
+        } else if(direction === Direction.East) {
+            newPosition.horizontal++;
+        }
+        return newPosition;
     }
 
 };
