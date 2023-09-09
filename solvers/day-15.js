@@ -1,5 +1,3 @@
-const { direction } = require("./day-11");
-
 class IntCode {
     addOP = 1;
     multOP = 2;
