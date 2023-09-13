@@ -237,6 +237,7 @@ class Vector2 {
 
 const SetAndForget = { 
     debugPartOne: false,
+    debugPartTwo: true,
     debugBuildGrid: false,
     solvePartOne: (state) => {
         let grid = SetAndForget.buildGrid(state);
@@ -249,6 +250,60 @@ const SetAndForget = {
         }
         let alignmentSum = intersections.reduce((prev, curr) => prev + (curr.horizontal*curr.vertical), 0);
         return alignmentSum;
+    },
+    solvePartTwo: (state) => {
+        // Functions
+        // A: L,12,L,12,L,6,L,6,
+        // B: L,12,L,6,R,12,R,8,
+        // C: R,8,R,4,L,12
+        let fA = SetAndForget.functionToProgram("L,12,L,12,L,6,L,6");
+        let fB = SetAndForget.functionToProgram("L,12,L,6,R,12,R,8");
+        let fC = SetAndForget.functionToProgram("R,8,R,4,L,12");
+        // A,C,A,B,C,A,B,C,A,C
+        let routine = SetAndForget.functionToProgram("A,C,A,B,C,A,B,C,A,C");
+        if(SetAndForget.debugPartTwo) {
+            console.log("FA: " + fA);
+            console.log("FB: " + fB);
+            console.log("FC: " + fC);
+            console.log("Routine: " + routine);
+        }
+        
+        let useCamera = SetAndForget.functionToProgram("y");
+        let dontUseCamera = SetAndForget.functionToProgram("n");
+
+        let input = [...routine, ...fA, ...fB, ...fC, ...dontUseCamera];
+        let robot = new IntCode(false,state,input,0,0,false,0);
+        let snapshot = robot.run(input);
+        snapshot.state = [];
+        let output = snapshot.output;
+        let dust = [];
+        let foundDust = false;
+        for(let idx = 1; idx < output.length; idx++) {
+            if(foundDust) {
+                dust.push(output[idx]);
+            } else {
+                if(output[idx] === Ascii.NewLine.value && output[idx-1] === Ascii.NewLine.value) {
+                    foundDust = true;
+                }
+            }
+        }
+        console.log(snapshot);
+        console.log(dust);
+        let line = '';
+        dust.forEach(val => {
+            if(val === Ascii.Scaffold.value || val === Ascii.OpenSpace.value) {
+                return;
+            }
+            else if(val === Ascii.NewLine.value) {
+                console.log(line);
+                line = '';
+            } else {
+                line = `${line}${String.fromCharCode(val)}`;
+            }
+        });
+        if(line.length > 0) {
+            console.log(line);
+        }
     },
     buildGrid: (state) => {
         let robot = new IntCode(false, state, [0,0], 0, 0, true, 0);
@@ -315,7 +370,24 @@ const SetAndForget = {
             }
         }
         return intersections;
-    }
+    },
+    functionToProgram: (funcStr) => {
+        let program = [];
+        let instructions = funcStr.split(",");
+        instructions.forEach((instruction, index) => {
+            if(instruction === '12') {
+                program.push('6'.charCodeAt(0));
+                program.push('6'.charCodeAt(0));
+            } else {
+                program.push(instruction.charCodeAt(0));
+            }
+            if(index < instructions.length-1) {
+                program.push(','.charCodeAt(0));
+            }
+        });
+        program.push(Ascii.NewLine.value);
+        return program;
+    },
 };
 
 module.exports = SetAndForget;
