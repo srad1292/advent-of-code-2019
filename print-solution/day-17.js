@@ -2,7 +2,7 @@ const SetAndForget = require('../solvers/day-17');
 
 console.log("===Part One===")
 let startingState = getStartingState();
-SetAndForget.solvePartOne(startingState);
+console.log("Alignment Sum: " + SetAndForget.solvePartOne(startingState));
 console.log("==============");
 
 console.log("");

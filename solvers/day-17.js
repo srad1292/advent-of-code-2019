@@ -236,13 +236,19 @@ class Vector2 {
 }
 
 const SetAndForget = { 
-    debugPartOne: true,
-    debugBuildGrid: true,
+    debugPartOne: false,
+    debugBuildGrid: false,
     solvePartOne: (state) => {
         let grid = SetAndForget.buildGrid(state);
         if(SetAndForget.debugPartOne) {
             SetAndForget.printGrid(grid);
         }
+        let intersections = SetAndForget.findIntersections(grid);
+        if(SetAndForget.debugPartOne) {
+            console.log(intersections);
+        }
+        let alignmentSum = intersections.reduce((prev, curr) => prev + (curr.horizontal*curr.vertical), 0);
+        return alignmentSum;
     },
     buildGrid: (state) => {
         let robot = new IntCode(false, state, [0,0], 0, 0, true, 0);
@@ -292,6 +298,23 @@ const SetAndForget = {
             }
             console.log(line);
         }
+    },
+    findIntersections: (grid) => {
+        let intersections = [];
+        // Intersections can't be along the border so don't bother searching for those
+        for(let vertical = 1; vertical < grid.length-1; vertical++) {
+            for(let horizontal = 1; horizontal < grid[vertical].length-1; horizontal++) {
+                if(grid[vertical][horizontal] === Ascii.Scaffold.display &&
+                    grid[vertical][horizontal-1] === Ascii.Scaffold.display &&
+                    grid[vertical][horizontal+1] === Ascii.Scaffold.display &&
+                    grid[vertical-1][horizontal] === Ascii.Scaffold.display &&
+                    grid[vertical+1][horizontal] === Ascii.Scaffold.display
+                ) {
+                    intersections.push(new Vector2(vertical, horizontal));
+                }
+            }
+        }
+        return intersections;
     }
 };
 
