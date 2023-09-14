@@ -244,8 +244,8 @@ class Vector2 {
 }
 
 const SetAndForget = { 
-    debugPartOne: true,
-    debugPartTwo: true,
+    debugPartOne: false,
+    debugPartTwo: false,
     debugBuildGrid: false,
     solvePartOne: (state) => {
         let grid = SetAndForget.buildGrid(state);
@@ -263,20 +263,18 @@ const SetAndForget = {
         let responses = SetAndForget.buildResponses();
 
         let dust = SetAndForget.collectDust(responses, state);
+        return dust;
     },
     buildResponses: () => {
         // Functions
         // A: L,12,L,12,L,6,L,6,
         // B: L,12,L,6,R,12,R,8,
         // C: R,8,R,4,L,12
-        // let fA = SetAndForget.functionToProgram("L,12,L,12,L,6,L,6");
-        // let fB = SetAndForget.functionToProgram("L,12,L,6,R,12,R,8");
-        // let fC = SetAndForget.functionToProgram("R,8,R,4,L,12");
         let fA = SetAndForget.functionToProgram("L,12,L,12,L,6,L,6");
         let fB = SetAndForget.functionToProgram("L,12,L,6,R,12,R,8");
         let fC = SetAndForget.functionToProgram("R,8,R,4,L,12");
-        // A,C,A,B,C,A,B,C,A,C
-        let routine = SetAndForget.functionToProgram("A,C,A,B,C,A,B,C,A,C");
+        // A,C,A,B,C,A,B,C,A,B
+        let routine = SetAndForget.functionToProgram("A,C,A,B,C,A,B,C,A,B");
         if(SetAndForget.debugPartTwo) {
             console.log("FA: " + fA);
             console.log("FB: " + fB);
@@ -341,13 +339,17 @@ const SetAndForget = {
 
         if(SetAndForget.debugPartTwo) {
             console.log("Got Dust");
-            dust = dust.filter(val => {
-                return val !== Ascii.OpenSpace.value && val !== Ascii.Scaffold.value && val !== Ascii.NewLine.value
-            });
+            // dust = dust.filter(val => {
+            //     return val !== Ascii.OpenSpace.value && val !== Ascii.Scaffold.value && val !== Ascii.NewLine.value
+            // });
             SetAndForget.printDust(dust);
         }
 
-        return dust;
+        // dust = dust.filter(val => {
+        //     return val !== Ascii.OpenSpace.value && val !== Ascii.Scaffold.value && val !== Ascii.NewLine.value
+        // });
+        // console.log(dust);
+        return dust[dust.length-1];
     },
     snapshotToGrid: (snapshot) => {
         let grid = [];
@@ -375,15 +377,19 @@ const SetAndForget = {
         return grid;
     },
     printDust: (dust) => {
-        console.log(dust);
+        // console.log(dust);
         let line = '';
-        dust.forEach(val => {
-            if(val === Ascii.Scaffold.value || val === Ascii.OpenSpace.value) {
-                return;
-            }
-            else if(val === Ascii.NewLine.value) {
+        dust.forEach((val, idx) => {
+            // if(val === Ascii.Scaffold.value || val === Ascii.OpenSpace.value) {
+            //     return;
+            // }
+            // else 
+            if(val === Ascii.NewLine.value) {
                 console.log(line);
                 line = '';
+                if(idx > 0 && dust[idx-1] === Ascii.NewLine.value) {
+                    console.log("\n----\n");
+                }
             } else {
                 line = `${line}${String.fromCharCode(val)}`;
             }
@@ -402,7 +408,7 @@ const SetAndForget = {
         } else if(promptIdx === Prompt.functionC) {
             return responses.fC;
         } else if(promptIdx === Prompt.video) {
-            return responses.useCamera;
+            return responses.dontUseCamera;
         }
         return [0,0];
     },

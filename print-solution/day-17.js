@@ -9,7 +9,8 @@ console.log("");
 
 console.log("===Part Two===")
 startingState = getWakeUpState();
-SetAndForget.solvePartTwo(startingState);
+// 982279
+console.log("Dust Collected: " + SetAndForget.solvePartTwo(startingState));
 console.log("==============");
 
 console.log("");
