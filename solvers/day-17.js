@@ -102,7 +102,7 @@ class IntCode {
                 } else if(op === this.outputOP) {
                     getRWResult = this.getReadParamValue(this.state, currentIndex, this.relativeBase, 1, opAndParams);
                     this.state = getRWResult.state;
-                    valueA = getRWResult.value;
+                    valueA = getRWResult.value || 0;
 
                     output.push(valueA);
                     currentIndex+=2;
@@ -225,6 +225,14 @@ const Ascii = {
     InSpace: {value: 88, display: 'X'}, 
 }
 
+const Prompt = {
+    main: 0,
+    functionA: 1,
+    functionB: 2,
+    functionC: 3,
+    video: 4
+}
+
 class Vector2 {
     constructor(vertical, horizontal) {
         this.vertical = vertical;
@@ -236,7 +244,7 @@ class Vector2 {
 }
 
 const SetAndForget = { 
-    debugPartOne: false,
+    debugPartOne: true,
     debugPartTwo: true,
     debugBuildGrid: false,
     solvePartOne: (state) => {
@@ -252,10 +260,18 @@ const SetAndForget = {
         return alignmentSum;
     },
     solvePartTwo: (state) => {
+        let responses = SetAndForget.buildResponses();
+
+        let dust = SetAndForget.collectDust(responses, state);
+    },
+    buildResponses: () => {
         // Functions
         // A: L,12,L,12,L,6,L,6,
         // B: L,12,L,6,R,12,R,8,
         // C: R,8,R,4,L,12
+        // let fA = SetAndForget.functionToProgram("L,12,L,12,L,6,L,6");
+        // let fB = SetAndForget.functionToProgram("L,12,L,6,R,12,R,8");
+        // let fC = SetAndForget.functionToProgram("R,8,R,4,L,12");
         let fA = SetAndForget.functionToProgram("L,12,L,12,L,6,L,6");
         let fB = SetAndForget.functionToProgram("L,12,L,6,R,12,R,8");
         let fC = SetAndForget.functionToProgram("R,8,R,4,L,12");
@@ -270,24 +286,95 @@ const SetAndForget = {
         
         let useCamera = SetAndForget.functionToProgram("y");
         let dontUseCamera = SetAndForget.functionToProgram("n");
-
-        let input = [...routine, ...fA, ...fB, ...fC, ...dontUseCamera];
-        let robot = new IntCode(false,state,input,0,0,false,0);
-        let snapshot = robot.run(input);
-        snapshot.state = [];
-        let output = snapshot.output;
+        return {fA, fB, fC, routine, useCamera, dontUseCamera};
+    },
+    collectDust: (responses, state) => {
+        let input = [];
+        let robot = new IntCode(false,state,input,0,0,true,0);
+        let promptIdx = Prompt.main;
+        let halted = false;
+        let snapshot;
         let dust = [];
-        let foundDust = false;
-        for(let idx = 1; idx < output.length; idx++) {
-            if(foundDust) {
-                dust.push(output[idx]);
-            } else {
-                if(output[idx] === Ascii.NewLine.value && output[idx-1] === Ascii.NewLine.value) {
-                    foundDust = true;
+        let collectOutput = false;
+        let endOfPrompt = false;
+
+        while(!halted) {
+            snapshot = robot.run(input);
+            robot.updateValues(snapshot);
+
+            if(snapshot.halted) {
+                dust = snapshot.output;
+                halted = true;
+                break;
+            }
+
+            let output = snapshot.output[0];
+
+
+            if(SetAndForget.debugPartTwo) {
+                snapshot.state = [];
+                // console.log(snapshot);
+            }
+
+            endOfPrompt = output === (":").charCodeAt(0) || output === ("?").charCodeAt(0);
+            if(endOfPrompt) {    
+                if(SetAndForget.debugPartTwo) {
+                    console.log("Found a prompt");
+                    console.log({promptIdx, inputIndex: robot.inputIndex});
+                }
+                input = SetAndForget.getInputForPrompt(responses, promptIdx);
+                robot.inputIndex = 0;
+                robot.input = input;
+                promptIdx++;
+                if(promptIdx > Prompt.video) {
+                    robot.pauseOnOutput = false;
+                    console.log("Finished with prompts");
+                    console.log({instructionPointer: snapshot.instructionPointer});
+                    collectOutput = true;
+                    // input = [];
                 }
             }
+
+            
+
         }
-        console.log(snapshot);
+
+        if(SetAndForget.debugPartTwo) {
+            console.log("Got Dust");
+            dust = dust.filter(val => {
+                return val !== Ascii.OpenSpace.value && val !== Ascii.Scaffold.value && val !== Ascii.NewLine.value
+            });
+            SetAndForget.printDust(dust);
+        }
+
+        return dust;
+    },
+    snapshotToGrid: (snapshot) => {
+        let grid = [];
+        let row = [];
+        for(let idx = 0; idx < snapshot.length; idx++) {
+            if(snapshot[idx] === Ascii.NewLine.value) {
+                grid.push(row);
+                row = [];
+            } else if(snapshot[idx] === Ascii.OpenSpace.value){
+                row.push(Ascii.OpenSpace.display);
+            } else if(snapshot[idx] === Ascii.Scaffold.value){
+                row.push(Ascii.Scaffold.display);
+            } else if(snapshot[idx] === Ascii.Up.value) {
+                row.push(Ascii.Up.display);
+            }  else if(snapshot[idx] === Ascii.Down.value) {
+                row.push(Ascii.Down.display);
+            }  else if(snapshot[idx] === Ascii.Left.value) {
+                row.push(Ascii.Left.display);
+            }  else if(snapshot[idx] === Ascii.Right.value) {
+                row.push(Ascii.Right.display);
+            } else {
+                console.log("Unexpected out: " + snapshot[idx]);
+            }
+        }
+        return grid;
+    },
+    printDust: (dust) => {
         console.log(dust);
         let line = '';
         dust.forEach(val => {
@@ -304,6 +391,20 @@ const SetAndForget = {
         if(line.length > 0) {
             console.log(line);
         }
+    },
+    getInputForPrompt: (responses, promptIdx) => {
+        if(promptIdx === Prompt.main) {
+            return responses.routine;
+        } else if(promptIdx === Prompt.functionA) {
+            return responses.fA;
+        } else if(promptIdx === Prompt.functionB) {
+            return responses.fB;
+        } else if(promptIdx === Prompt.functionC) {
+            return responses.fC;
+        } else if(promptIdx === Prompt.video) {
+            return responses.useCamera;
+        }
+        return [0,0];
     },
     buildGrid: (state) => {
         let robot = new IntCode(false, state, [0,0], 0, 0, true, 0);
@@ -372,19 +473,20 @@ const SetAndForget = {
         return intersections;
     },
     functionToProgram: (funcStr) => {
-        let program = [];
-        let instructions = funcStr.split(",");
-        instructions.forEach((instruction, index) => {
-            if(instruction === '12') {
-                program.push('6'.charCodeAt(0));
-                program.push('6'.charCodeAt(0));
-            } else {
-                program.push(instruction.charCodeAt(0));
-            }
-            if(index < instructions.length-1) {
-                program.push(','.charCodeAt(0));
-            }
-        });
+        // let program = [];
+        // let instructions = funcStr.split(",");
+        // instructions.forEach((instruction, index) => {
+        //     if(instruction === '12') {
+        //         program.push('6'.charCodeAt(0));
+        //         program.push('6'.charCodeAt(0));
+        //     } else {
+        //         program.push(instruction.charCodeAt(0));
+        //     }
+        //     if(index < instructions.length-1) {
+        //         program.push(','.charCodeAt(0));
+        //     }
+        // });
+        let program = funcStr.split("").map(c => c.charCodeAt(0));
         program.push(Ascii.NewLine.value);
         return program;
     },
